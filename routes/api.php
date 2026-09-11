@@ -29,18 +29,6 @@ if ($method === 'POST' && $uri === '/v1/modsec/events') {
     header('Content-Type: application/json; charset=utf-8');
     $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
-    var_dump([
-        'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
-        'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
-        'authorization_header' => function_exists('getallheaders')
-            ? (getallheaders()['Authorization'] ?? null)
-            : null,
-        'auth_roger' => $_SERVER['AUTHORIZATION'] ?? '',
-        'authorization_roger_2' => $_SERVER['Authorization'] ?? '',
-    ]);
-
-    exit;
-
     if (
         !preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)
     ) {
