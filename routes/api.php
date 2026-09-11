@@ -27,14 +27,27 @@ if ($method === 'GET' && $uri === '/health') {
 
 if ($method === 'POST' && $uri === '/v1/modsec/events') {
     header('Content-Type: application/json; charset=utf-8');
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? null;
-    $apiToken = $_ENV['API_TOKEN'] ?? '';
+    $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
     if (
-        empty($apiKey) ||
-        !is_string($apiKey) ||
+        !preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)
+    ) {
+        http_response_code(401);
+
+        echo json_encode([
+            'success' => false,
+            'message' => 'Unauthorized'
+        ]);
+
+        exit;
+    }
+
+    $apiToken = $_ENV['API_TOKEN'] ?? '';
+    $receivedToken = $matches[1];
+
+    if (
         $apiToken === '' ||
-        !hash_equals($apiToken, $apiKey)
+        !hash_equals($apiToken, $receivedToken)
     ) {
         http_response_code(401);
 
