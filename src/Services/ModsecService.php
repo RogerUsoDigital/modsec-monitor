@@ -14,9 +14,79 @@ class ModsecService
 
     public function store(array $payload): array
     {
+        $event = $this->validateEvent($payload);
+
+        return $this->processEvent(
+            $event['source'],
+            $event['ip'],
+            $event['amount']
+        );
+    }
+
+    public function storeBulk(array $payload): array
+    {
         $source = $payload['source'] ?? null;
-        $ip = $payload['ip'] ?? null;
-        $amount = $payload['amount'] ?? null;
+        $events = $payload['events'] ?? null;
+
+        if (!is_string($source) || trim($source) === '') {
+            throw new InvalidArgumentException(
+                'Field "source" is required'
+            );
+        }
+
+        if (!is_array($events) || $events === []) {
+            throw new InvalidArgumentException(
+                'Field "events" must be a non-empty array'
+            );
+        }
+
+        $source = trim($source);
+
+        $created = 0;
+        $updated = 0;
+        $results = [];
+
+        foreach ($events as $event) {
+            if (!is_array($event)) {
+                throw new InvalidArgumentException(
+                    'Each event must be an object'
+                );
+            }
+
+            $validated = $this->validateEvent([
+                'source' => $source,
+                'ip' => $event['ip'] ?? null,
+                'amount' => $event['amount'] ?? null
+            ]);
+
+            $result = $this->processEvent(
+                $validated['source'],
+                $validated['ip'],
+                $validated['amount']
+            );
+
+            if ($result['action'] === 'created') {
+                $created++;
+            } else {
+                $updated++;
+            }
+
+            $results[] = $result;
+        }
+
+        return [
+            'total' => count($results),
+            'created' => $created,
+            'updated' => $updated,
+            'events' => $results
+        ];
+    }
+
+    private function validateEvent(array $event): array
+    {
+        $source = $event['source'] ?? null;
+        $ip = $event['ip'] ?? null;
+        $amount = $event['amount'] ?? null;
 
         if (!is_string($source) || trim($source) === '') {
             throw new InvalidArgumentException(
@@ -29,9 +99,6 @@ class ModsecService
                 'Field "ip" is required'
             );
         }
-
-        $source = trim($source);
-        $ip = trim($ip);
 
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new InvalidArgumentException(
@@ -53,6 +120,18 @@ class ModsecService
             );
         }
 
+        return [
+            'source' => trim($source),
+            'ip' => trim($ip),
+            'amount' => $amount
+        ];
+    }
+
+    private function processEvent(
+        string $source,
+        string $ip,
+        int $amount
+    ): array {
         $existing = $this->repository->findBySourceAndIp(
             $source,
             $ip
@@ -76,10 +155,12 @@ class ModsecService
             ];
         }
 
+        $previousAmount = (int) $existing['current_amount'];
+
         $this->repository->update(
             (int) $existing['id'],
             $amount,
-            (int) $existing['current_amount']
+            $previousAmount
         );
 
         return [
@@ -87,7 +168,7 @@ class ModsecService
             'source' => $source,
             'ip' => $ip,
             'current_amount' => $amount,
-            'previous_amount' => (int) $existing['current_amount'],
+            'previous_amount' => $previousAmount,
             'initial_amount' => (int) $existing['initial_amount'],
             'action' => 'updated'
         ];

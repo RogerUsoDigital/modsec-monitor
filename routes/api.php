@@ -25,13 +25,17 @@ if ($method === 'GET' && $uri === '/health') {
     exit;
 }
 
-if ($method === 'POST' && $uri === '/v1/modsec/events') {
-    header('Content-Type: application/json; charset=utf-8');
+if (
+    $method === 'POST' &&
+    (
+        $uri === '/v1/modsec/events' ||
+        $uri === '/v1/modsec/events/bulk'
+    )
+) {
     $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $apiToken = $_ENV['API_TOKEN'] ?? '';
 
-    if (
-        !preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)
-    ) {
+    if (!preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)) {
         http_response_code(401);
 
         echo json_encode([
@@ -42,7 +46,6 @@ if ($method === 'POST' && $uri === '/v1/modsec/events') {
         exit;
     }
 
-    $apiToken = $_ENV['API_TOKEN'] ?? '';
     $receivedToken = $matches[1];
 
     if (
@@ -70,16 +73,20 @@ if ($method === 'POST' && $uri === '/v1/modsec/events') {
 
         $controller = new ModsecController($service);
 
-        $controller->store();
+        if ($uri === '/v1/modsec/events') {
+            $controller->store();
+        } else {
+            $controller->storeBulk();
+        }
     } catch (\Throwable $e) {
+        error_log($e->getMessage());
+
         http_response_code(500);
 
         echo json_encode([
             'success' => false,
             'message' => 'Internal server error'
         ]);
-
-        exit;
     }
 
     exit;
