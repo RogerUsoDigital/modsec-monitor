@@ -76,9 +76,7 @@ if ($method === 'POST' && $uri === '/v1/modsec/events') {
 
         echo json_encode([
             'success' => false,
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
+            'message' => 'Internal server error'
         ]);
 
         exit;
