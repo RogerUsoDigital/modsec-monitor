@@ -5,12 +5,16 @@ use App\Database\Connection;
 use App\Repositories\ModsecRepository;
 use App\Services\ModsecService;
 
-header('Content-Type: application/json; charset=utf-8');
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$uri = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/') ?: '/';
 
-$method = $_SERVER['REQUEST_METHOD'];
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if ($uri === '/' || $uri === '/index.php') {
+    require __DIR__ . '/../src/Views/index.php';
+    exit;
+}
 
 if ($method === 'GET' && $uri === '/health') {
+    header('Content-Type: application/json; charset=utf-8');
     http_response_code(200);
 
     echo json_encode([
@@ -22,11 +26,15 @@ if ($method === 'GET' && $uri === '/health') {
 }
 
 if ($method === 'POST' && $uri === '/v1/modsec/events') {
+    header('Content-Type: application/json; charset=utf-8');
     $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? null;
+    $apiToken = $_ENV['API_TOKEN'] ?? '';
 
     if (
         empty($apiKey) ||
-        !hash_equals($_ENV['API_TOKEN'], $apiKey)
+        !is_string($apiKey) ||
+        $apiToken === '' ||
+        !hash_equals($apiToken, $apiKey)
     ) {
         http_response_code(401);
 
@@ -38,24 +46,30 @@ if ($method === 'POST' && $uri === '/v1/modsec/events') {
         exit;
     }
 
-    $connection = new Connection();
+    try {
+        $connection = new Connection();
 
-    $repository = new ModsecRepository(
-        $connection->getConnection()
-    );
+        $repository = new ModsecRepository(
+            $connection->getConnection()
+        );
 
-    $service = new ModsecService($repository);
+        $service = new ModsecService($repository);
 
-    $controller = new ModsecController($service);
+        $controller = new ModsecController($service);
 
-    $controller->store();
+        $controller->store();
+    } catch (\Throwable $e) {
+        http_response_code(500);
+
+        echo json_encode([
+            'success' => false,
+            'message' => 'Internal server error'
+        ]);
+    }
 
     exit;
 }
 
-http_response_code(404);
-
-echo json_encode([
-    'success' => false,
-    'message' => 'Route not found'
-]);
+// Qualquer rota que não exista redireciona para a raiz
+header('Location: /', true, 302);
+exit;

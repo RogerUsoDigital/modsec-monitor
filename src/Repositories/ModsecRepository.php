@@ -87,7 +87,8 @@ class ModsecRepository
             UPDATE modsec_ip_events
             SET
                 current_amount = :current_amount,
-                previous_amount = :previous_amount
+                previous_amount = :previous_amount,
+                updated_at = NOW()
             WHERE id = :id
         ';
 

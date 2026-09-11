@@ -30,6 +30,9 @@ class ModsecService
             );
         }
 
+        $source = trim($source);
+        $ip = trim($ip);
+
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new InvalidArgumentException(
                 'Field "ip" must be a valid IP address'
@@ -49,9 +52,6 @@ class ModsecService
                 'Field "amount" must be greater than or equal to zero'
             );
         }
-
-        $source = trim($source);
-        $ip = trim($ip);
 
         $existing = $this->repository->findBySourceAndIp(
             $source,
