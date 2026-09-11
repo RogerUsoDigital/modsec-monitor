@@ -88,7 +88,8 @@ class ModsecRepository
             SET
                 current_amount = :current_amount,
                 previous_amount = :previous_amount,
-                updated_at = NOW()
+                updated_at = NOW(),
+                status = :status
             WHERE id = :id
         ';
 
@@ -97,7 +98,31 @@ class ModsecRepository
         $statement->execute([
             'id' => $id,
             'current_amount' => $currentAmount,
-            'previous_amount' => $previousAmount
+            'previous_amount' => $previousAmount,
+            'status' => 'active'
         ]);
+    }
+
+    public function updateStatus(
+        string $source,
+        string $ip,
+        string $status
+    ): bool {
+        $sql = '
+            UPDATE modsec_ip_events
+            SET status = :status
+            WHERE source = :source
+            AND ip = :ip
+        ';
+
+        $statement = $this->connection->prepare($sql);
+
+        $statement->execute([
+            'source' => $source,
+            'ip' => $ip,
+            'status' => $status
+        ]);
+
+        return $statement->rowCount() > 0;
     }
 }

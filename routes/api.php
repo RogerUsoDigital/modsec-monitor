@@ -29,7 +29,8 @@ if (
     $method === 'POST' &&
     (
         $uri === '/v1/modsec/events' ||
-        $uri === '/v1/modsec/events/bulk'
+        $uri === '/v1/modsec/events/bulk' ||
+        $uri === '/v1/modsec/events/status'
     )
 ) {
     $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
@@ -75,6 +76,8 @@ if (
 
         if ($uri === '/v1/modsec/events') {
             $controller->store();
+        } elseif ($uri === '/v1/modsec/events/status') {
+            $controller->updateStatus();
         } else {
             $controller->storeBulk();
         }

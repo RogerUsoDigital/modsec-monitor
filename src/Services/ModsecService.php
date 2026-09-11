@@ -173,4 +173,82 @@ class ModsecService
             'action' => 'updated'
         ];
     }
+
+    public function updateStatus(array $payload): array
+    {
+        $events = $payload['events'] ?? null;
+
+        if (!is_array($events) || $events === []) {
+            throw new InvalidArgumentException(
+                'Field "events" must be a non-empty array'
+            );
+        }
+
+        $updated = 0;
+        $notFound = 0;
+        $results = [];
+
+        foreach ($events as $event) {
+            if (!is_array($event)) {
+                throw new InvalidArgumentException(
+                    'Each event must be an object'
+                );
+            }
+
+            $ip = $event['ip'] ?? null;
+            $source = $event['source'] ?? null;
+            $status = $event['status'] ?? null;
+
+            if (!is_string($ip) || !filter_var($ip, FILTER_VALIDATE_IP)) {
+                throw new InvalidArgumentException(
+                    'Field "ip" must be a valid IP address'
+                );
+            }
+
+            if (!is_string($source) || trim($source) === '') {
+                throw new InvalidArgumentException(
+                    'Field "source" is required'
+                );
+            }
+
+            if (!is_string($status) || trim($status) === '') {
+                throw new InvalidArgumentException(
+                    'Field "status" is required'
+                );
+            }
+
+            $updatedStatus = $this->repository->updateStatus(
+                trim($source),
+                trim($ip),
+                trim($status)
+            );
+
+            if ($updatedStatus) {
+                $updated++;
+
+                $results[] = [
+                    'source' => trim($source),
+                    'ip' => trim($ip),
+                    'status' => trim($status),
+                    'action' => 'updated'
+                ];
+            } else {
+                $notFound++;
+
+                $results[] = [
+                    'source' => trim($source),
+                    'ip' => trim($ip),
+                    'status' => trim($status),
+                    'action' => 'not_found'
+                ];
+            }
+        }
+
+        return [
+            'total' => count($events),
+            'updated' => $updated,
+            'not_found' => $notFound,
+            'events' => $results
+        ];
+    }
 }
