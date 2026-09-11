@@ -1,0 +1,14 @@
+{
+    "name": "uso/modsec-monitor",
+    "description": "API para recebimento de eventos ModSecurity",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
