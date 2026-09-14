@@ -23,6 +23,17 @@ class ModsecService
         );
     }
 
+    // rota para registro vazio, quando não existe nenhum registro
+    public function storeReset(array $payload): array
+    {
+        $this->repository->delete($payload['source']);
+
+        return [
+            'source' => $payload['source'],
+            'action' => 'reset'
+        ];
+    }
+
     public function storeBulk(array $payload): array
     {
         $source = $payload['source'] ?? null;
