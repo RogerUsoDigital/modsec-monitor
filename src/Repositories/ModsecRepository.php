@@ -137,4 +137,15 @@ class ModsecRepository
             'status' => 'blocked'
         ]);
     }
+
+    public function delete(string $source): void
+    {
+        $sql = 'DELETE FROM modsec_ip_events WHERE source = :source';
+
+        $statement = $this->connection->prepare($sql);
+
+        $statement->execute([
+            'source' => $source
+        ]);
+    }
 }
