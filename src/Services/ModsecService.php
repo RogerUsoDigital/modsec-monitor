@@ -59,6 +59,8 @@ class ModsecService
                 'amount' => $event['amount'] ?? null
             ]);
 
+            $this->repository->delete($validated['source']);
+
             $result = $this->processEvent(
                 $validated['source'],
                 $validated['ip'],

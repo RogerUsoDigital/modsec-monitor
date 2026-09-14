@@ -125,4 +125,15 @@ class ModsecRepository
 
         return $statement->rowCount() > 0;
     }
+
+    public function delete(string $source): void
+    {
+        $sql = 'DELETE FROM modsec_ip_events WHERE source = :source';
+
+        $statement = $this->connection->prepare($sql);
+
+        $statement->execute([
+            'source' => $source
+        ]);
+    }
 }
