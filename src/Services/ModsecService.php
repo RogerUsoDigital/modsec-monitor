@@ -53,6 +53,9 @@ class ModsecService
 
         $source = trim($source);
 
+        // $this->repository->blockAll($validated['source']);
+        $this->repository->delete($source);
+
         $created = 0;
         $updated = 0;
         $results = [];
@@ -69,9 +72,6 @@ class ModsecService
                 'ip' => $event['ip'] ?? null,
                 'amount' => $event['amount'] ?? null
             ]);
-
-            // $this->repository->blockAll($validated['source']);
-            $this->repository->delete($validated['source']);
 
             $result = $this->processEvent(
                 $validated['source'],
